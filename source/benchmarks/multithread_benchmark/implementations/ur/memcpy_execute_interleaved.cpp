@@ -47,7 +47,7 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
 
     // Setup
     UrState ur;
-    Timer timer;
+    //Timer timer;
 
     // Create kernel
     auto spirvModule = FileHelper::loadBinaryFile("memory_benchmark_fill_with_ones.spv");
@@ -130,7 +130,7 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             events_vec.assign(3, nullptr);
         }
 
-        timer.measureStart();
+//        timer.measureStart();
 
         auto queue = queues[thread_id];
         for (size_t i = 0; i < numOpsPerThread; i++) {
@@ -147,8 +147,8 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             EXPECT_UR_RESULT_SUCCESS(urEnqueueUSMMemcpy(queue, false, host_dst, usm_ptr, allocSize, useEvents, kernelSignalEventPtr, finalSignalEventPtr));
         }
 
-        if (!measureCompletionTime)
-            timer.measureEnd();
+  //      if (!measureCompletionTime)
+    //        timer.measureEnd();
 
         if (useEvents) {
             for (size_t i = 0; i < numOpsPerThread; i++) {
@@ -158,8 +158,8 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
             EXPECT_UR_RESULT_SUCCESS(urQueueFinish(queue));
         }
 
-        if (measureCompletionTime)
-            timer.measureEnd();
+      //  if (measureCompletionTime)
+        //    timer.measureEnd();
 
         for (auto &events_vec : events) {
             for (auto &event : events_vec) {
@@ -184,6 +184,7 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
     }
 
     // Benchmark
+    Timer timer;
     for (size_t i = 0u; i < arguments.iterations; i++) {
         std::shared_mutex barrier;
         std::vector<std::thread> threads;
@@ -196,14 +197,17 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
                 worker(j, timers[j]);
             });
         }
+	timer.measureStart();
         lock.unlock();
 
-        auto aggregatedTime = std::chrono::high_resolution_clock::duration(0);
+//        auto aggregatedTime = std::chrono::high_resolution_clock::duration(0);
         for (size_t j = 0u; j < arguments.numThreads; j++) {
             threads[j].join();
-            aggregatedTime += timers[j].get();
+    //        aggregatedTime += timers[j].get();
         }
-        auto avgTime = aggregatedTime / arguments.numThreads;
+
+	timer.measureEnd();
+  //      auto avgTime = aggregatedTime / arguments.numThreads;
 
 #ifndef NDEBUG
         // verify the results
@@ -220,7 +224,7 @@ static TestResult run(const MemcpyExecuteArguments &arguments, Statistics &stati
         }
 #endif
 
-        statistics.pushValue(avgTime, typeSelector.getUnit(), typeSelector.getType());
+        statistics.pushValue(timer.get() , typeSelector.getUnit(), typeSelector.getType());
     }
 
     if (srcUSM) {
